@@ -1,0 +1,1815 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgregaDOR — Agregador de Pesquisas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--paper:#ece9e1;--card:#fbfaf7;--field:#fff;--ink:#1d1c19;--muted:#5d594e;--line:#d9d5c9;--line2:#a9a495;--green:#1b7a4a;--green-d:#14603a;--orange:#c9510c;--blue:#1f5fbf;--display:'Bricolage Grotesque','Public Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:14.5px/1.5 'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}
+button,input,select{font:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+button{cursor:pointer;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:8px 13px;border-radius:5px;font-weight:600;box-shadow:0 2px 0 var(--ink);transition:transform .08s,box-shadow .08s,background .15s}
+button:hover{background:#fff}
+button:active{transform:translateY(2px);box-shadow:none}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+button.primary{background:var(--green);color:#fff}
+button.primary:hover{background:var(--green-d)}
+button.success{background:var(--ink);color:#fff}
+button.success:hover{background:#3a3832}
+button.danger{color:var(--orange);border-color:var(--orange);box-shadow:0 2px 0 var(--orange)}
+button.danger:active{box-shadow:none}
+input,select{background:var(--field);color:var(--ink);border:1.5px solid var(--line2);padding:8px 9px;border-radius:5px;width:100%}
+input:focus,select:focus{border-color:var(--ink)}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--green)}
+label{display:block;color:var(--muted);font-size:12.5px;font-weight:600;margin:0 0 5px}
+.app{max-width:1500px;margin:auto;padding:24px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:3px solid var(--ink)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:46px;height:46px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font:700 26px var(--display);box-shadow:0 3px 0 var(--green)}
+.eyebrow{color:var(--green-d);font-size:12.5px;font-weight:700}
+.brand h1{margin:0;font:700 32px/1.05 var(--display);letter-spacing:-.02em}
+.brand h1 .sub{font:500 16px var(--display);letter-spacing:0;color:var(--muted)}
+.sub{color:var(--muted);font-size:12.5px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.election-bar{background:var(--card);border:1.5px solid var(--ink);border-radius:6px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.election-selector{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:260px}
+.election-selector label{margin:0;font-weight:700;color:var(--ink);font-size:13px;white-space:nowrap}
+.election-selector select{max-width:340px;font-weight:600;border-color:var(--ink)}
+.election-actions{display:flex;gap:8px;flex-wrap:wrap}
+.banner{border:1.5px solid #c9a227;background:#fff3c4;color:#5a4500;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px;background:var(--card);border:2px solid var(--ink);border-radius:6px;overflow:hidden}
+.kpi{padding:14px 16px;border-right:2px solid var(--ink)}
+.kpi:last-child{border-right:0}
+.kpi .label{color:var(--muted);font-size:12.5px;font-weight:600}
+.kpi strong{display:block;font:700 28px/1.1 var(--display);letter-spacing:-.01em;margin:5px 0;overflow-wrap:anywhere}
+.kpi small{color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);gap:16px}
+.panel{background:var(--card);border:1px solid var(--line2);border-top:3px solid var(--ink);border-radius:2px 2px 8px 8px;padding:16px;min-width:0;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.panel h2{font:700 17px/1.2 var(--display);margin:0}
+.hint{font-size:12.5px;color:var(--muted);margin:5px 0 12px}
+.map-wrap{height:440px;border-radius:4px;overflow:hidden;background:#e4e0d5;border:1.5px solid var(--line2)}
+#map{height:100%;width:100%;background:#e4e0d5}
+.leaflet-container{background:#e4e0d5;font-family:inherit}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:12px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;border:1px solid #0003}
+.chart-box{height:245px;position:relative}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.form-grid .wide{grid-column:1/-1}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.check{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;margin:0}
+.range-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px;margin:14px 0}
+.range-row label{margin:0}
+.range-row input{grid-column:1/-1;padding:0;accent-color:var(--green)}
+.range-row output{text-align:right;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px}
+th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px}
+th{color:var(--muted);font-weight:700;font-size:12px;border-bottom:2px solid var(--ink)}
+tbody tr:hover td{background:#f3f1ea}
+td .mini{color:var(--muted);font-size:11.5px}
+.pill{border:1.5px solid var(--ink);border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:700;background:#fff;color:var(--ink)}
+.empty{text-align:center;color:var(--muted);padding:25px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.status{font-size:12px;color:var(--muted);margin-top:9px;min-height:16px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:10px}
+.footer{color:var(--muted);font-size:12px;text-align:center;padding:16px 0 4px}
+.file-label input{display:none}
+.small-btn{font-size:12px;padding:4px 9px;box-shadow:0 1px 0 var(--ink)}
+.small-btn.danger{box-shadow:0 1px 0 var(--orange)}
+.toggle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toggle label{display:flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-weight:500;cursor:pointer}
+.candidate-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.modal-backdrop{position:fixed;inset:0;background:#1d1c1999;z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal{width:min(760px,100%);max-height:90vh;overflow:auto;background:var(--card);border:2px solid var(--ink);border-top-width:4px;border-radius:8px;padding:18px}
+.modal h2{margin:0 0 15px;font:700 20px var(--display)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.candidate-field{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center}
+.candidate-field label{margin:0}
+.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}
+.mode-option{border:1.5px solid var(--line2);background:var(--field);border-radius:6px;padding:11px;cursor:pointer}
+.mode-option:has(input:checked){border-color:var(--ink);background:#e3f1e8;box-shadow:inset 0 0 0 1px var(--ink)}
+.mode-option label{display:flex;gap:8px;align-items:flex-start;margin:0;color:var(--ink);cursor:pointer}
+.mode-option strong{display:block;font-size:13.5px}
+.mode-option small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:3px}
+.advanced-fields{border-top:2px solid var(--ink);margin-top:16px;padding-top:14px}
+.regional-entry{border:1.5px solid var(--line2);border-radius:6px;padding:12px;margin:10px 0;background:#fff}
+.regional-head{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:end}
+.regional-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.section-title{font:700 14.5px var(--display);margin:16px 0 8px}
+.inline-actions{display:flex;gap:6px}
+.footer-note{color:var(--muted);font-size:12px;margin-top:8px}
+@media(max-width:950px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(2){border-right:0}.kpi:nth-child(-n+2){border-bottom:2px solid var(--ink)}.map-wrap{height:360px}}
+@media(max-width:560px){.app{padding:12px}.kpi{padding:11px}.kpi strong{font-size:22px}.two-col{grid-template-columns:1fr}.form-grid,.candidate-fields{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.map-wrap{height:320px}.election-selector select{max-width:100%}.mode-switch,.regional-results{grid-template-columns:1fr}.regional-head{grid-template-columns:1fr 1fr}.regional-head button{grid-column:1/-1}.brand h1{font-size:26px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <div class="eyebrow">Laboratório eleitoral</div>
+        <h1>AgregaDOR <span class="sub">/ pesquisas eleitorais</span></h1>
+        <div class="sub">Múltiplas eleições • ponderação transparente • mapa estadual</div>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="file-label">
+        <input id="fileImport" type="file" accept=".csv,.json,.txt">
+        <button type="button" onclick="document.getElementById('fileImport').click()">Importar CSV/JSON</button>
+      </label>
+      <button type="button" class="primary" id="newPollBtn">+ Nova pesquisa</button>
+      <button type="button" id="exportBtn">Exportar JSON</button>
+      <button type="button" id="pngBtn">Baixar gráficos PNG</button>
+      <button type="button" id="resetBtn">Restaurar padrão</button>
+    </div>
+  </header>
+
+  <section class="election-bar" aria-label="Seletor de eleição">
+    <div class="election-selector">
+      <label for="electionSelect">Cenário / Eleição ativa:</label>
+      <select id="electionSelect"></select>
+      <span class="pill" id="electionMetaPill">0 pesquisas</span>
+    </div>
+    <div class="election-actions">
+      <button type="button" class="success" id="newElectionBtn">+ Nova eleição</button>
+      <button type="button" id="renameElectionBtn">Renomear</button>
+      <button type="button" class="danger" id="deleteElectionBtn">Excluir eleição</button>
+    </div>
+  </section>
+
+  <div class="banner" id="demoBanner">
+    <strong>DEMO — DADOS FICTÍCIOS.</strong> Registros de demonstração são inventados e não representam pesquisas reais. Você pode criar novas eleições em branco ou com candidatos próprios na barra acima.
+  </div>
+
+  <section class="kpis">
+    <div class="kpi"><div class="label">Líder no agregado ajustado</div><strong id="kpiLeader">—</strong><small id="kpiLeaderSub">—</small></div>
+    <div class="kpi"><div class="label">Pesquisas consideradas</div><strong id="kpiCount">—</strong><small>Após filtros e escopo</small></div>
+    <div class="kpi"><div class="label">Diferença entre 1º e 2º</div><strong id="kpiLead">—</strong><small>pontos percentuais</small></div>
+    <div class="kpi"><div class="label">Última data de campo</div><strong id="kpiDate">—</strong><small>entre registros disponíveis</small></div>
+  </section>
+
+  <div class="grid">
+    <div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Mapa eleitoral do Brasil</h2>
+          <select id="mapMetric" style="width:auto;max-width:220px">
+            <option value="leader">Candidato líder</option>
+            <option value="margin">Margem do líder</option>
+          </select>
+        </div>
+        <p class="hint">Clique em um estado para filtrar. Estados sem pesquisa estadual própria ficam neutros; pesquisas nacionais não são projetadas em cada UF.</p>
+        <div class="map-wrap"><div id="map"></div></div>
+        <div class="map-legend" id="mapLegend"></div>
+        <div class="status" id="mapStatus">Carregando mapa GeoJSON…</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Evolução temporal (agregado acumulado)</h2>
+          <select id="trendScope" style="width:auto">
+            <option value="current">Escopo filtrado atual</option>
+            <option value="BR">Apenas pesquisas nacionais</option>
+          </select>
+        </div>
+        <div class="chart-box"><canvas id="trendChart"></canvas></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Pesquisas na base (<span id="activeElectionTableTitle">Eleição 1</span>)</h2>
+          <span class="pill" id="tableCount">0 registros</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Instituto</th><th>Campo</th><th>Escopo</th><th>Amostra</th><th>Líder na pesquisa</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="pollTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Resultado agregado</h2>
+          <div class="toggle">
+            <label><input type="radio" name="voteMode" value="total" checked> Votos totais</label>
+            <label><input type="radio" name="voteMode" value="valid"> Votos válidos</label>
+          </div>
+        </div>
+        <p class="hint">Votos válidos excluem indecisos, brancos e nulos e renormalizam os candidatos elegíveis em 100%. Incerteza é a dispersão ponderada entre pesquisas.</p>
+        <div class="chart-box"><canvas id="resultChart"></canvas></div>
+        <div class="legend" id="candidateLegend"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Filtros geográficos</h2>
+          <button type="button" class="small-btn" id="clearScope">Limpar</button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="regionFilter">Região</label>
+            <select id="regionFilter">
+              <option value="BR">Brasil</option>
+              <option value="Norte">Norte</option>
+              <option value="Nordeste">Nordeste</option>
+              <option value="Centro-Oeste">Centro-Oeste</option>
+              <option value="Sudeste">Sudeste</option>
+              <option value="Sul">Sul</option>
+            </select>
+          </div>
+          <div>
+            <label for="stateFilter">Estado</label>
+            <select id="stateFilter"><option value="BR">Todos os estados</option></select>
+          </div>
+        </div>
+        <div class="status" id="filterStatus"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Parâmetros de ajuste</h2>
+          <button type="button" class="small-btn" id="defaultsBtn">Padrões</button>
+        </div>
+        <div class="range-row"><label for="halfLife">Meia-vida da pesquisa (dias)</label><output id="halfLifeOut">14</output><input id="halfLife" type="range" min="3" max="45" value="14"></div>
+        <div class="range-row"><label for="samplePower">Peso da amostra (expoente)</label><output id="samplePowerOut">0,5</output><input id="samplePower" type="range" min="0" max="100" value="50"></div>
+        <div class="range-row"><label for="biasPower">Correção de viés histórico</label><output id="biasPowerOut">50%</output><input id="biasPower" type="range" min="0" max="100" value="50"></div>
+        <div class="range-row"><label for="regionalWeight">Peso de ajuste regional</label><output id="regionalWeightOut">100%</output><input id="regionalWeight" type="range" min="0" max="150" value="100"></div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="useRecency" checked> Ponderar recência</label>
+          <label class="check"><input type="checkbox" id="useSample" checked> Ponderar amostra</label>
+          <label class="check"><input type="checkbox" id="useBias" checked> Corrigir viés</label>
+          <label class="check"><input type="checkbox" id="useRegion" checked> Reponderar regiões</label>
+        </div>
+        <p class="hint">Cada eleição salva seus próprios parâmetros de ajuste de forma independente.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Simulador de transferência</h2>
+          <span class="pill">cenário hipotético</span>
+        </div>
+        <p class="hint">Transfere uma fração do resultado agregado de um candidato elegível para outro sem alterar os dados originais.</p>
+        <div class="form-grid">
+          <div><label for="fromCandidate">Origem</label><select id="fromCandidate"></select></div>
+          <div><label for="toCandidate">Destino</label><select id="toCandidate"></select></div>
+          <div class="wide"><label for="transferPct">Percentual transferido: <strong id="transferOut">10%</strong></label><input id="transferPct" type="range" min="0" max="100" value="10"></div>
+          <div class="wide">
+            <button type="button" class="primary" id="applyTransfer">Aplicar cenário</button>
+            <button type="button" id="clearTransfer">Remover cenário</button>
+          </div>
+        </div>
+        <div class="status" id="transferStatus">Cenário não aplicado.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Coleta de fontes públicas</h2></div>
+        <p class="hint">Importa uma URL direta que retorne CSV ou JSON para a eleição ativa.</p>
+        <label for="sourceUrl">URL direta CSV/JSON</label>
+        <input id="sourceUrl" placeholder="https://exemplo.org/pesquisas.csv">
+        <div style="display:flex;gap:8px;margin-top:9px">
+          <button type="button" class="primary" id="fetchBtn">Buscar URL</button>
+          <button type="button" id="templateBtn">Baixar modelo CSV</button>
+        </div>
+        <div class="status" id="fetchStatus"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Metodologia do protótipo</h2><span class="pill">transparente</span></div>
+    <div class="two-col">
+      <div>
+        <p class="hint"><strong>Peso:</strong> recência = 2<sup>−dias/meia-vida</sup> calculada até a data de referência; amostra = (n/mediana)<sup>expoente</sup>. Pesos são limitados entre 0,1 e 3,0 para evitar dominância extrema.</p>
+        <p class="hint"><strong>Viés:</strong> erro histórico por candidato é subtraído parcialmente conforme o seletor de intensidade antes da consolidação. O viés é informado por pesquisa, no modo avançado do cadastro.</p>
+      </div>
+      <div>
+        <p class="hint"><strong>Múltiplas Eleições:</strong> você pode criar eleições independentes (ex.: Eleição 1, Eleição 2, 1º Turno, 2º Turno ou disputas estaduais) mantendo bases e candidatos isolados.</p>
+        <p class="hint"><strong>Limites:</strong> a incerteza exibida reflete a dispersão ponderada entre pesquisas e não substitui intervalos preditivos bayesianos completos.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">AgregaDOR — protótipo local. Confirme fontes, metodologia, registro e datas de campo antes de interpretar estimativas.</div>
+</div>
+
+<!-- Modal: Nova / Editar Pesquisa -->
+<div class="modal-backdrop" id="pollModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="panel-head">
+      <h2 id="modalTitle">Nova pesquisa</h2>
+      <button type="button" id="closeModal">Fechar</button>
+    </div>
+    <form id="pollForm">
+      <input type="hidden" id="editId">
+      <div class="mode-switch" role="radiogroup" aria-label="Modo de cadastro">
+        <div class="mode-option"><label><input type="radio" name="pollEntryMode" value="simple" checked><span><strong>Cadastro simples</strong><small>Dados essenciais e percentuais nacionais/estaduais.</small></span></label></div>
+        <div class="mode-option"><label><input type="radio" name="pollEntryMode" value="advanced"><span><strong>Avançado / ponderado</strong><small>Metodologia, margem de erro e resultados regionais.</small></span></label></div>
+      </div>
+      <div class="form-grid">
+        <div><label for="editInstitute">Instituto</label><input id="editInstitute" required></div>
+        <div><label for="editDate">Data de campo (fim)</label><input id="editDate" type="date" required></div>
+        <div><label for="editN">Tamanho da amostra (n)</label><input id="editN" type="number" min="1" step="1" required></div>
+        <div><label for="editScope">Escopo / UF</label><select id="editScope"><option value="BR">Brasil (BR)</option></select></div>
+      </div>
+      <h3 class="section-title">Percentuais da pesquisa principal (%)</h3>
+      <div class="candidate-fields" id="candidateInputs"></div>
+      <div class="advanced-fields" id="advancedPollFields" hidden>
+        <h3 class="section-title" style="margin-top:0">Ficha técnica</h3>
+        <div class="form-grid">
+          <div><label for="editFieldStart">Início do campo</label><input id="editFieldStart" type="date"></div>
+          <div><label for="editMethod">Metodologia / modo de entrevista</label><select id="editMethod"><option value="">Não informado</option><option>Presencial domiciliar</option><option>Telefone (CATI)</option><option>Telefone automatizado (IVR)</option><option>Online / painel</option><option>Mista (presencial + telefone)</option><option>Mista (online + telefone)</option><option>Outro</option></select></div>
+          <div><label for="editMargin">Margem de erro (p.p.)</label><input id="editMargin" type="number" min="0" max="20" step="0.1" placeholder="Ex.: 2,2"></div>
+          <div><label for="editConfidence">Nível de confiança (%)</label><select id="editConfidence"><option value="">Não informado</option><option value="90">90%</option><option value="95">95%</option><option value="99">99%</option></select></div>
+          <div><label for="editSponsor">Contratante</label><input id="editSponsor" placeholder="Instituição / veículo"></div>
+          <div><label for="editRegistration">Registro no TSE</label><input id="editRegistration" placeholder="Ex.: BR-00000/2026"></div>
+          <div class="wide"><label for="editNotes">Observações metodológicas</label><input id="editNotes" placeholder="Ex.: cotas, desenho amostral, ponderações declaradas"></div>
+        </div>
+        <h3 class="section-title">Viés histórico do instituto (opcional)</h3>
+        <div class="footer-note">Em pontos percentuais: valor positivo = o instituto costuma superestimar o candidato (é subtraído conforme a intensidade do ajuste de viés).</div>
+        <div class="candidate-fields" id="biasInputs" style="margin-top:8px"></div>
+        <h3 class="section-title">Resultados por macrorregião (opcional)</h3>
+        <div class="footer-note">Informe apenas regiões publicadas pela pesquisa. Cada região recebe seu próprio tamanho amostral e percentuais. Esses dados são usados no filtro regional e não entram como pesquisas nacionais adicionais.</div>
+        <div id="regionalEntries"></div>
+        <button type="button" id="addRegionalEntry">+ Adicionar região</button>
+      </div>
+      <div class="footer-note">Em "Votos totais", os valores são mantidos na escala original (ou normalizados caso ultrapassem 100%). Em "Votos válidos", brancos/nulos e indecisos são expurgados e os candidatos elegíveis são renormalizados para 100%.</div>
+      <div class="modal-actions">
+        <button type="button" id="cancelModal">Cancelar</button>
+        <button class="primary" type="submit">Salvar pesquisa</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Criar Nova Eleição -->
+<div class="modal-backdrop" id="electionModal" role="dialog" aria-modal="true" aria-labelledby="electionModalTitle">
+  <div class="modal">
+    <div class="panel-head">
+      <h2 id="electionModalTitle">Iniciar nova eleição</h2>
+      <button type="button" id="closeElectionModal">Fechar</button>
+    </div>
+    <form id="electionForm">
+      <div class="form-grid">
+        <div class="wide">
+          <label for="newElectionName">Nome da eleição / cenário</label>
+          <input id="newElectionName" placeholder="Ex.: Eleição 2 — 2º Turno" required>
+        </div>
+        <div class="wide">
+          <label for="newElectionTemplate">Modo de inicialização</label>
+          <select id="newElectionTemplate">
+            <option value="empty">Base em branco (com candidatos definidos abaixo)</option>
+            <option value="demo">Carregar pesquisas fictícias de demonstração</option>
+            <option value="clone">Duplicar candidatos e pesquisas da eleição atual</option>
+          </select>
+        </div>
+        <div class="wide" id="customCandidatesWrap">
+          <label for="newElectionCandidates">Candidatos concorrentes (separados por vírgula)</label>
+          <input id="newElectionCandidates" value="Candidato A, Candidato B, Candidato C" placeholder="Ex.: Candidato A, Candidato B, Candidato C">
+          <div class="footer-note">As categorias "Brancos/Nulos" e "Indecisos" são adicionadas automaticamente. Você também poderá importar novos candidatos via CSV/JSON depois.</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancelElectionModal">Cancelar</button>
+        <button class="success" type="submit">Criar e selecionar eleição</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'voxbrasil.v5';
+const LEGACY_KEYS = ['voxbrasil.v4', 'voxbrasil.v3', 'voxbrasil.v2'];
+const STATES = [
+  ['AC','Acre','Norte'],['AL','Alagoas','Nordeste'],['AP','Amapá','Norte'],['AM','Amazonas','Norte'],
+  ['BA','Bahia','Nordeste'],['CE','Ceará','Nordeste'],['DF','Distrito Federal','Centro-Oeste'],['ES','Espírito Santo','Sudeste'],
+  ['GO','Goiás','Centro-Oeste'],['MA','Maranhão','Nordeste'],['MT','Mato Grosso','Centro-Oeste'],['MS','Mato Grosso do Sul','Centro-Oeste'],
+  ['MG','Minas Gerais','Sudeste'],['PA','Pará','Norte'],['PB','Paraíba','Nordeste'],['PR','Paraná','Sul'],
+  ['PE','Pernambuco','Nordeste'],['PI','Piauí','Nordeste'],['RJ','Rio de Janeiro','Sudeste'],['RN','Rio Grande do Norte','Nordeste'],
+  ['RS','Rio Grande do Sul','Sul'],['RO','Rondônia','Norte'],['RR','Roraima','Norte'],['SC','Santa Catarina','Sul'],
+  ['SP','São Paulo','Sudeste'],['SE','Sergipe','Nordeste'],['TO','Tocantins','Norte']
+];
+const EXCLUSIONS = ['brancos','branco','nulos','nulo','brancos_nulos','indecisos','indeciso','nao sabe','ns/nr','nao respondeu','nenhum','nenhuma','abstencao'];
+const PALETTE = ['#1f5fbf','#d6402f','#1b7a4a','#d9930d','#7a4fc2','#e0701a','#1894a8','#c2397f','#6f9a1c','#6b7280','#a85a5a','#4b45b8'];
+
+function safeColor(value, fallback = PALETTE[0]) {
+  const color = String(value || '').trim();
+  return /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : fallback;
+}
+
+let elections = [];
+let activeElectionId = '';
+let candidates = [];
+let polls = [];
+let transfer = null;
+let map = null;
+let geoLayer = null;
+let resultChart = null;
+let trendChart = null;
+
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+const pct = n => fmt(n) + '%';
+
+function localISO(d = new Date()) {
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
+function localDaysAgoISO(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - Number(days || 0));
+  return localISO(d);
+}
+
+const slug = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function isExcludedName(name) {
+  const n = slug(name).replace(/_/g, ' ');
+  return Boolean(n) && EXCLUSIONS.some(x => n === x || n.includes(x));
+}
+
+function isCandidateExcluded(c) {
+  return Boolean(c?.excluded || isExcludedName(c?.name) || isExcludedName(c?.id));
+}
+
+function eligibleCandidates() {
+  return candidates.filter(c => !isCandidateExcluded(c));
+}
+
+function visibleCandidates() {
+  return getMode() === 'valid' ? eligibleCandidates() : candidates;
+}
+
+function nextAvailableColor(pool = candidates) {
+  const used = new Set(pool.map(c => String(c.color || '').toLowerCase()));
+  const free = PALETTE.find(color => !used.has(color.toLowerCase()));
+  return free || PALETTE[pool.length % PALETTE.length];
+}
+
+function colorForCandidate(id) {
+  const c = candidates.find(x => x.id === id);
+  if (c?.color) return safeColor(c.color, PALETTE[0]);
+  const i = candidates.findIndex(x => x.id === id);
+  return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];
+}
+
+function makeCandidate(name, id, customColor, pool = candidates) {
+  const cleanName = String(name).trim();
+  const excluded = isExcludedName(cleanName) || isExcludedName(id);
+  return {
+    id: id || ('cand_' + (slug(cleanName) || 'item') + '_' + Math.random().toString(36).slice(2, 6)),
+    name: cleanName || String(id),
+    color: safeColor(customColor, nextAvailableColor(pool)),
+    excluded
+  };
+}
+
+function stateRegion(scope) {
+  return STATES.find(s => s[0] === scope)?.[2] || 'BR';
+}
+
+function defaultSettings() {
+  return {
+    halfLife: 14,
+    samplePower: 50,
+    biasPower: 50,
+    regionalWeight: 100,
+    useRecency: true,
+    useSample: true,
+    useBias: true,
+    useRegion: true,
+    regionFilter: 'BR',
+    stateFilter: 'BR',
+    trendScope: 'current',
+    mapMetric: 'leader'
+  };
+}
+
+function demoData() {
+  const c = [
+    { id: 'c1', name: 'Candidato A', color: PALETTE[0], excluded: false },
+    { id: 'c2', name: 'Candidato B', color: PALETTE[1], excluded: false },
+    { id: 'c3', name: 'Candidato C', color: PALETTE[2], excluded: false },
+    { id: 'brancos_nulos', name: 'Brancos/Nulos', color: PALETTE[3], excluded: true },
+    { id: 'indecisos', name: 'Indecisos', color: PALETTE[4], excluded: true }
+  ];
+  const mk = (id, inst, days, scope, n, vals) => ({
+    id,
+    institute: inst,
+    date: localDaysAgoISO(days),
+    scope,
+    region: scope === 'BR' ? 'BR' : stateRegion(scope),
+    n,
+    results: Object.fromEntries(c.map((x, i) => [x.id, vals[i] || 0])),
+    bias: {},
+    source: 'DEMO FICTÍCIA'
+  });
+  return {
+    candidates: c,
+    polls: [
+      mk('demo1', 'Instituto Alfa', 2, 'BR', 2000, [40, 36, 11, 6, 7]),
+      mk('demo2', 'Instituto Beta', 5, 'BR', 1500, [38, 38, 12, 5, 7]),
+      mk('demo3', 'Instituto Gama', 8, 'BR', 1200, [41, 35, 10, 7, 7]),
+      mk('demo4', 'Instituto Alfa', 12, 'BR', 1800, [39, 37, 11, 6, 7]),
+      mk('demo5', 'Instituto Beta', 4, 'SP', 900, [42, 34, 11, 6, 7]),
+      mk('demo6', 'Instituto Gama', 7, 'SP', 1100, [40, 36, 12, 5, 7]),
+      mk('demo7', 'Instituto Alfa', 3, 'SE', 650, [37, 39, 11, 6, 7]),
+      mk('demo8', 'Instituto Beta', 9, 'SE', 700, [39, 38, 10, 6, 7]),
+      mk('demo9', 'Instituto Gama', 6, 'BA', 850, [33, 45, 9, 6, 7]),
+      mk('demo10', 'Instituto Alfa', 10, 'BA', 900, [35, 43, 9, 6, 7]),
+      mk('demo11', 'Instituto Beta', 3, 'RS', 800, [44, 32, 10, 6, 8]),
+      mk('demo12', 'Instituto Gama', 11, 'RS', 700, [42, 34, 11, 6, 7]),
+      mk('demo13', 'Instituto Alfa', 6, 'MG', 1000, [39, 38, 10, 6, 7]),
+      mk('demo14', 'Instituto Beta', 2, 'MG', 1000, [40, 37, 11, 5, 7]),
+      mk('demo15', 'Instituto Gama', 4, 'AM', 600, [36, 39, 11, 6, 8])
+    ]
+  };
+}
+
+function createElectionObject(name, template = 'empty', customCandNames = []) {
+  const id = 'el_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  if (template === 'demo') {
+    const d = demoData();
+    return {
+      id,
+      name: name || 'Eleição 1',
+      candidates: d.candidates,
+      polls: d.polls,
+      settings: defaultSettings(),
+      voteMode: 'total',
+      transfer: null
+    };
+  }
+  if (template === 'clone') {
+    saveActiveElectionState();
+    const cur = getActiveElection();
+    return {
+      id,
+      name: name || ((cur?.name || 'Eleição') + ' (Cópia)'),
+      candidates: structuredClone(cur ? cur.candidates : demoData().candidates),
+      polls: structuredClone(cur ? cur.polls : []).map((p, idx) => ({ ...p, id: 'clone_' + Date.now() + '_' + idx })),
+      settings: structuredClone(cur ? cur.settings : defaultSettings()),
+      voteMode: cur ? cur.voteMode : 'total',
+      transfer: structuredClone(cur ? cur.transfer : null)
+    };
+  }
+
+  const candList = [];
+  const names = customCandNames.length ? customCandNames : ['Candidato A', 'Candidato B', 'Candidato C'];
+  names.forEach((rawName, idx) => {
+    const clean = String(rawName || '').trim();
+    if (!clean) return;
+    if (!candList.some(c => slug(c.name) === slug(clean))) {
+      candList.push(makeCandidate(clean, 'c' + (idx + 1), PALETTE[candList.length % PALETTE.length], candList));
+    }
+  });
+  if (!candList.some(c => !isCandidateExcluded(c))) {
+    candList.push(makeCandidate('Candidato A', 'c1', PALETTE[0], candList));
+    candList.push(makeCandidate('Candidato B', 'c2', PALETTE[1], candList));
+  }
+  if (!candList.some(c => slug(c.id) === 'brancos_nulos' || slug(c.name).includes('branco'))) {
+    candList.push({ id: 'brancos_nulos', name: 'Brancos/Nulos', color: nextAvailableColor(candList), excluded: true });
+  }
+  if (!candList.some(c => slug(c.id) === 'indecisos' || slug(c.name).includes('indeciso'))) {
+    candList.push({ id: 'indecisos', name: 'Indecisos', color: nextAvailableColor(candList), excluded: true });
+  }
+
+  return {
+    id,
+    name: name || `Eleição ${elections.length + 1}`,
+    candidates: candList,
+    polls: [],
+    settings: defaultSettings(),
+    voteMode: 'total',
+    transfer: null
+  };
+}
+
+function getMode() {
+  return document.querySelector('input[name="voteMode"]:checked')?.value || 'total';
+}
+
+function getSettings() {
+  return {
+    halfLife: +$('halfLife').value,
+    samplePower: +$('samplePower').value,
+    biasPower: +$('biasPower').value,
+    regionalWeight: +$('regionalWeight').value,
+    useRecency: $('useRecency').checked,
+    useSample: $('useSample').checked,
+    useBias: $('useBias').checked,
+    useRegion: $('useRegion').checked,
+    regionFilter: $('regionFilter').value,
+    stateFilter: $('stateFilter').value,
+    trendScope: $('trendScope').value,
+    mapMetric: $('mapMetric').value
+  };
+}
+
+function restoreSettings(s = {}) {
+  const cfg = { ...defaultSettings(), ...(s || {}) };
+  $('halfLife').value = cfg.halfLife;
+  $('samplePower').value = cfg.samplePower;
+  $('biasPower').value = cfg.biasPower;
+  $('regionalWeight').value = cfg.regionalWeight;
+  ['useRecency', 'useSample', 'useBias', 'useRegion'].forEach(k => {
+    $(k).checked = Boolean(cfg[k]);
+  });
+  $('regionFilter').value = cfg.regionFilter || 'BR';
+  $('stateFilter').value = cfg.stateFilter || 'BR';
+  $('trendScope').value = cfg.trendScope || 'current';
+  $('mapMetric').value = cfg.mapMetric || 'leader';
+  updateKnobLabels();
+}
+
+function getActiveElection() {
+  return elections.find(e => e.id === activeElectionId) || elections[0] || null;
+}
+
+function saveActiveElectionState() {
+  const el = getActiveElection();
+  if (!el) return;
+  el.candidates = candidates;
+  el.polls = polls;
+  el.settings = getSettings();
+  el.voteMode = getMode();
+  el.transfer = transfer;
+}
+
+function applyActiveElectionToRuntime() {
+  let el = getActiveElection();
+  if (!el) {
+    el = createElectionObject('Eleição 1', 'demo');
+    elections = [el];
+  }
+  activeElectionId = el.id;
+  candidates = Array.isArray(el.candidates) && el.candidates.length
+    ? el.candidates.filter(c => c && typeof c === 'object' && (c.id || c.name)).map((c, i, arr) => ({
+        ...c,
+        id: String(c.id || ('cand_' + (slug(c.name) || 'item') + '_' + i)),
+        name: String(c.name || c.id || ('Candidato ' + (i + 1))),
+        color: safeColor(c.color, PALETTE[i % PALETTE.length]),
+        excluded: isCandidateExcluded(c)
+      }))
+    : demoData().candidates;
+  if (!candidates.length) candidates = demoData().candidates;
+  polls = Array.isArray(el.polls)
+    ? el.polls.filter(p => p && parseDate(p.date)).map(p => ({ ...p, date: parseDate(p.date), region: p.scope === 'BR' ? 'BR' : stateRegion(p.scope) }))
+    : [];
+  transfer = el.transfer || null;
+  restoreSettings(el.settings || defaultSettings());
+  const modeVal = el.voteMode === 'valid' ? 'valid' : 'total';
+  const radio = document.querySelector(`input[name="voteMode"][value="${modeVal}"]`);
+  if (radio) radio.checked = true;
+  if (!transfer) {
+    $('transferStatus').textContent = 'Cenário não aplicado.';
+  }
+}
+
+function syncElectionBarUI() {
+  const sel = $('electionSelect');
+  sel.innerHTML = elections.map(e => `<option value="${esc(e.id)}">${esc(e.name)}</option>`).join('');
+  sel.value = activeElectionId;
+  const active = getActiveElection();
+  $('electionMetaPill').textContent = `${polls.length} pesquisa(s) • ${eligibleCandidates().length} candidato(s)`;
+  $('activeElectionTableTitle').textContent = active ? active.name : 'Eleição';
+  $('deleteElectionBtn').disabled = elections.length <= 1;
+}
+
+let persistWarned = false;
+let persistTimer = null;
+function schedulePersist() {
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(persist, 300);
+}
+
+function persist() {
+  try {
+    saveActiveElectionState();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      activeElectionId,
+      elections
+    }));
+  } catch (e) {
+    console.warn('Não foi possível salvar no localStorage:', e);
+    if (!persistWarned) {
+      persistWarned = true;
+      alert('Atenção: não foi possível salvar os dados neste navegador (armazenamento cheio ou bloqueado). Use "Exportar JSON" para não perder seu trabalho.');
+    }
+  }
+}
+
+function loadData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && Array.isArray(saved.elections) && saved.elections.length) {
+      elections = saved.elections;
+      activeElectionId = saved.activeElectionId || elections[0].id;
+      applyActiveElectionToRuntime();
+      return;
+    }
+    for (const k of LEGACY_KEYS) {
+      const legacy = JSON.parse(localStorage.getItem(k));
+      if (legacy && Array.isArray(legacy.polls) && Array.isArray(legacy.candidates) && legacy.candidates.length) {
+        const migrated = {
+          id: 'el_migrated_1',
+          name: 'Eleição 1',
+          candidates: legacy.candidates,
+          polls: legacy.polls,
+          settings: legacy.settings || defaultSettings(),
+          voteMode: legacy.voteMode || 'total',
+          transfer: null
+        };
+        elections = [migrated];
+        activeElectionId = migrated.id;
+        applyActiveElectionToRuntime();
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('Armazenamento local inválido; carregando base demonstrativa.', e);
+  }
+  const el1 = createElectionObject('Eleição 1 (Demo)', 'demo');
+  elections = [el1];
+  activeElectionId = el1.id;
+  applyActiveElectionToRuntime();
+}
+
+const RESERVED_KEYS = new Set([
+  'institute','instituto','date','data','data_campo','fim_campo','scope','uf','estado',
+  'n','amostra','source','fonte','id','region','regiao','bias','vies','metodologia',
+  'margem_erro','candidates','resultados','results','percentuais','votos'
+]);
+
+function findExistingCandidate(keyOrName) {
+  const s = slug(keyOrName);
+  if (!s) return null;
+  return candidates.find(c => slug(c.id) === s || slug(c.name) === s) || null;
+}
+
+function ensureCandidatesFromRows(rows, importedCandidates = null) {
+  if (Array.isArray(importedCandidates)) {
+    for (const ic of importedCandidates) {
+      if (!ic || (!ic.id && !ic.name)) continue;
+      const existing = findExistingCandidate(ic.id) || findExistingCandidate(ic.name);
+      if (!existing) {
+        candidates.push(makeCandidate(ic.name || ic.id, ic.id, ic.color));
+      }
+    }
+  }
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    for (const key of Object.keys(row)) {
+      const k = slug(key);
+      if (!k || RESERVED_KEYS.has(k)) continue;
+      if (!findExistingCandidate(key)) {
+        candidates.push(makeCandidate(key));
+      }
+    }
+    const nested = row.results || row.resultados || row.percentuais || row.votos || {};
+    if (nested && typeof nested === 'object') {
+      for (const key of Object.keys(nested)) {
+        const k = slug(key);
+        if (!k || RESERVED_KEYS.has(k)) continue;
+        if (!findExistingCandidate(key)) {
+          candidates.push(makeCandidate(key));
+        }
+      }
+    }
+  }
+}
+
+function extractCandidateValue(obj, c) {
+  if (!obj || typeof obj !== 'object') return null;
+  if (obj[c.id] != null && String(obj[c.id]).trim() !== '') return obj[c.id];
+  if (obj[c.name] != null && String(obj[c.name]).trim() !== '') return obj[c.name];
+  const targetName = slug(c.name);
+  const targetId = slug(c.id);
+  const matchingKeys = Object.keys(obj).filter(k => {
+    const s = slug(k);
+    return s === targetName || s === targetId;
+  });
+  for (const k of matchingKeys) {
+    if (obj[k] != null && String(obj[k]).trim() !== '') return obj[k];
+  }
+  return null;
+}
+
+function normalizedResults(raw, rowFallback = {}) {
+  const out = {};
+  for (const c of candidates) {
+    let val = extractCandidateValue(raw, c);
+    if (val == null) val = extractCandidateValue(rowFallback, c);
+    const parsed = Number(String(val ?? 0).replace('%', '').replace(',', '.').trim());
+    out[c.id] = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+  return out;
+}
+
+function isValidCalendarDate(y, m, d) {
+  const yr = Number(y), mo = Number(m), da = Number(d);
+  if (!Number.isInteger(yr) || !Number.isInteger(mo) || !Number.isInteger(da)) return false;
+  if (yr < 1900 || yr > 2100 || mo < 1 || mo > 12 || da < 1 || da > 31) return false;
+  const dt = new Date(Date.UTC(yr, mo - 1, da));
+  return dt.getUTCFullYear() === yr && (dt.getUTCMonth() + 1) === mo && dt.getUTCDate() === da;
+}
+
+function parseDate(v) {
+  const raw = String(v || '').trim();
+  const isoMatch = raw.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return isValidCalendarDate(isoMatch[1], isoMatch[2], isoMatch[3]) ? isoMatch[0] : '';
+  }
+  const brMatch = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if (brMatch) {
+    const d = brMatch[1].padStart(2, '0');
+    const m = brMatch[2].padStart(2, '0');
+    const y = brMatch[3];
+    return isValidCalendarDate(y, m, d) ? `${y}-${m}-${d}` : '';
+  }
+  return '';
+}
+
+function parseSampleSize(v) {
+  let t = String(v ?? '').trim().replace(/\s/g, '');
+  if (!t) return NaN;
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+  else t = t.replace(',', '.');
+  return Number(t);
+}
+
+function normalizePoll(x, i) {
+  let scope = String(x.scope || x.uf || x.estado || 'BR').trim().toUpperCase();
+  if (['BRASIL', 'NACIONAL', 'BR'].includes(scope)) scope = 'BR';
+  const date = parseDate(x.date || x.data || x.data_campo || x.fim_campo);
+  if (!date) throw Error(`Registro ${i + 1}: data de calendário inválida ou ausente.`);
+  if (scope !== 'BR' && !STATES.some(s => s[0] === scope)) {
+    throw Error(`Registro ${i + 1}: UF inválida (${scope}). Use BR ou a sigla de um estado.`);
+  }
+  const raw = x.results || x.resultados || x.percentuais || x.votos || {};
+  const results = normalizedResults(raw, x);
+  if (!eligibleCandidates().some(c => (results[c.id] || 0) > 0)) {
+    throw Error(`Registro ${i + 1}: nenhum percentual positivo encontrado para candidatos elegíveis.`);
+  }
+  const nVal = parseSampleSize(x.n || x.amostra || 1000);
+  return {
+    id: String(x.id || ('imp_' + Date.now() + '_' + i)),
+    institute: String(x.institute || x.instituto || 'Instituto não informado').trim(),
+    date,
+    scope,
+    region: scope === 'BR' ? 'BR' : stateRegion(scope),
+    n: Number.isFinite(nVal) && nVal > 0 ? Math.round(nVal) : 1000,
+    results,
+    bias: (x.bias && typeof x.bias === 'object') ? x.bias : ((x.vies && typeof x.vies === 'object') ? x.vies : {}),
+    source: String(x.source || x.fonte || 'Importada').trim()
+  };
+}
+
+function pollScopeMatch(p) {
+  const state = $('stateFilter').value;
+  const region = $('regionFilter').value;
+  if (state !== 'BR') return p.scope === state;
+  if (region !== 'BR') {
+    const hasRegional = Array.isArray(p.regionalResults) && p.regionalResults.some(r => r.region === region);
+    return (p.scope !== 'BR' && stateRegion(p.scope) === region) || hasRegional;
+  }
+  return p.scope === 'BR';
+}
+
+function adjustValues(p) {
+  const mode = getMode();
+  const useBias = $('useBias').checked;
+  const biasIntensity = +$('biasPower').value / 100;
+  const values = {};
+  let hasActiveBias = false;
+
+  for (const c of candidates) {
+    const raw = Number(p.results?.[c.id] || 0);
+    let b = 0;
+    if (useBias && p.bias && biasIntensity > 0) {
+      const rawBias = Number(p.bias[c.id] ?? p.bias[c.name] ?? 0);
+      if (Number.isFinite(rawBias) && rawBias !== 0) {
+        b = rawBias * biasIntensity;
+        hasActiveBias = true;
+      }
+    }
+    values[c.id] = Math.max(0, raw - b);
+  }
+
+  if (mode === 'valid') {
+    for (const c of candidates) {
+      if (isCandidateExcluded(c)) values[c.id] = 0;
+    }
+    const sumValid = Object.values(values).reduce((a, b) => a + b, 0);
+    if (sumValid > 0) {
+      for (const id in values) values[id] = (values[id] / sumValid) * 100;
+    }
+  } else {
+    const sumTotal = Object.values(values).reduce((a, b) => a + b, 0);
+    if (sumTotal > 100.01 || (hasActiveBias && sumTotal > 100.01)) {
+      for (const id in values) values[id] = (values[id] / sumTotal) * 100;
+    }
+  }
+  return values;
+}
+
+function aggregate(list, withTransfer = true, refDateISO = null, allowRegionalBoost = true) {
+  if (!list.length) return { values: {}, uncertainty: {}, count: 0, rows: [], totalWeight: 0 };
+
+  const activeRegion = $('regionFilter').value;
+  const ns = list.map(p => {
+    const regional = activeRegion !== 'BR' && Array.isArray(p.regionalResults)
+      ? p.regionalResults.find(r => r.region === activeRegion) : null;
+    return Math.max(1, +(regional?.n || p.n) || 500);
+  }).sort((a, b) => a - b);
+  const med = ns[Math.floor(ns.length / 2)] || 1000;
+  const half = Math.max(1, +$('halfLife').value || 14);
+  const pow = +$('samplePower').value / 100;
+  const regWeight = +$('regionalWeight').value / 100;
+  const refTime = refDateISO ? new Date(refDateISO + 'T12:00:00').getTime() : Date.now();
+
+  const rows = list.map(p => {
+    const pollTime = new Date(p.date + 'T12:00:00').getTime();
+    const age = Number.isFinite(pollTime) ? Math.max(0, (refTime - pollTime) / 86400000) : 0;
+    const rec = $('useRecency').checked ? Math.pow(2, -age / half) : 1;
+    const regional = activeRegion !== 'BR' && Array.isArray(p.regionalResults)
+      ? p.regionalResults.find(r => r.region === activeRegion)
+      : null;
+    const sourcePoll = regional ? { ...p, n: regional.n || p.n, results: regional.results || p.results, bias: {} } : p;
+    const sample = $('useSample').checked ? Math.pow(Math.max(1, sourcePoll.n || 1) / med, pow) : 1;
+    let rw = 1;
+    if (allowRegionalBoost && $('useRegion').checked && activeRegion !== 'BR' && p.scope !== 'BR' && stateRegion(p.scope) === activeRegion) {
+      rw = regWeight;
+    }
+    const w = Math.min(3, Math.max(0.1, rec * sample * rw));
+    return { p, w, values: adjustValues(sourcePoll), regional: !!regional };
+  });
+
+  const total = rows.reduce((s, r) => s + r.w, 0);
+  const values = {};
+  const uncertainty = {};
+
+  if (total > 0) {
+    for (const c of candidates) {
+      const mean = rows.reduce((s, r) => s + (r.values[c.id] || 0) * r.w, 0) / total;
+      values[c.id] = mean;
+      const variance = rows.reduce((s, r) => s + r.w * Math.pow((r.values[c.id] || 0) - mean, 2), 0) / total;
+      uncertainty[c.id] = Math.sqrt(Math.max(0, variance));
+    }
+  }
+
+  if (withTransfer && transfer && values[transfer.from] != null && values[transfer.to] != null) {
+    const amount = values[transfer.from] * (transfer.pct / 100);
+    values[transfer.from] = Math.max(0, values[transfer.from] - amount);
+    values[transfer.to] += amount;
+  }
+
+  return { values, uncertainty, count: rows.length, rows, totalWeight: total };
+}
+
+function ranked(values, onlyEligible = false) {
+  const pool = onlyEligible ? eligibleCandidates() : visibleCandidates();
+  return pool
+    .map(c => ({ ...c, value: values[c.id] || 0 }))
+    .sort((a, b) => (b.value - a.value) || a.name.localeCompare(b.name, 'pt-BR'));
+}
+
+function currentPolls() {
+  return polls.filter(pollScopeMatch);
+}
+
+function renderKPIs(a) {
+  const r = ranked(a.values, true);
+  const hasPolls = a.count > 0 && r.length > 0;
+  $('kpiLeader').textContent = hasPolls ? r[0].name : '—';
+  $('kpiLeaderSub').textContent = hasPolls ? pct(r[0].value) + ' estimados' : 'Sem dados na eleição ativa';
+  $('kpiCount').textContent = a.count;
+  $('kpiLead').textContent = (hasPolls && r.length > 1) ? fmt(r[0].value - r[1].value) : '—';
+
+  const ds = currentPolls().map(p => p.date).sort();
+  $('kpiDate').textContent = ds.length ? new Date(ds[ds.length - 1] + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  $('filterStatus').textContent = `${a.count} pesquisa(s) ativa(s) no recorte. ${a.count > 0 && a.count < 3 ? 'Atenção: menos de 3 registros geram estimativa instável.' : ''}`;
+}
+
+const canvasBgPlugin = {
+  id: 'customCanvasBackgroundColor',
+  beforeDraw: (chart, args, options) => {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color || '#fbfaf7';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+
+function setupChartDefaults() {
+  if (!window.Chart) return;
+  Chart.register(canvasBgPlugin);
+  Chart.defaults.color = '#5d594e';
+  Chart.defaults.borderColor = '#d9d5c9';
+  Chart.defaults.font.family = 'Public Sans,system-ui,sans-serif';
+}
+
+function renderCharts(a) {
+  if (!window.Chart) return;
+
+  const rankedVals = ranked(a.values, false);
+  if (resultChart) resultChart.destroy();
+  resultChart = new Chart($('resultChart'), {
+    type: 'bar',
+    data: {
+      labels: rankedVals.map(x => x.name),
+      datasets: [{
+        label: 'Estimativa agregada',
+        data: rankedVals.map(x => x.value),
+        backgroundColor: rankedVals.map(x => colorForCandidate(x.id)),
+        borderRadius: 2
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      maintainAspectRatio: false,
+      plugins: {
+        customCanvasBackgroundColor: { color: '#fbfaf7' },
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${pct(c.raw)}` } }
+      },
+      scales: {
+        x: { min: 0, max: 100, grid: { color: '#d9d5c9' }, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false }, ticks: { color: '#1d1c19' } }
+      }
+    }
+  });
+
+  $('candidateLegend').innerHTML = rankedVals.map(c =>
+    `<span><i class="dot" style="background:${colorForCandidate(c.id)}"></i>${esc(c.name)}: ${a.values[c.id] == null ? '—' : pct(a.values[c.id])} <small>(± ${a.uncertainty[c.id] == null ? '—' : fmt(a.uncertainty[c.id])} pp)</small></span>`
+  ).join('');
+
+  const scope = $('trendScope').value;
+  const base = polls.filter(p => scope === 'BR' ? p.scope === 'BR' : pollScopeMatch(p));
+  const dates = [...new Set(base.map(p => p.date))].sort();
+  const activeCands = visibleCandidates();
+  const allowReg = scope !== 'BR';
+
+  const sets = activeCands.map(c => ({
+    label: c.name,
+    data: dates.map(d => {
+      const slice = base.filter(p => p.date <= d);
+      return aggregate(slice, false, d, allowReg).values[c.id] ?? null;
+    }),
+    borderColor: colorForCandidate(c.id),
+    backgroundColor: colorForCandidate(c.id),
+    tension: 0.25,
+    spanGaps: true,
+    pointRadius: 4,
+    pointHoverRadius: 7,
+    pointHitRadius: 12,
+    borderWidth: 2
+  }));
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart($('trendChart'), {
+    type: 'line',
+    data: {
+      labels: dates.map(d => new Date(d + 'T12:00:00').toLocaleDateString('pt-BR')),
+      datasets: sets
+    },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        customCanvasBackgroundColor: { color: '#fbfaf7' },
+        legend: { labels: { boxWidth: 10, color: '#1d1c19' } },
+        tooltip: {
+          callbacks: {
+            title: items => `Acumulado até: ${items[0]?.label || ''}`,
+            label: item => `${item.dataset.label}: ${pct(item.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#d9d5c9' }, ticks: { maxRotation: 45 } },
+        y: { min: 0, max: 100, grid: { color: '#d9d5c9' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+function renderTable() {
+  const list = currentPolls();
+  $('tableCount').textContent = list.length + ' registro(s)';
+  $('pollTable').innerHTML = list.slice().sort((a, b) => b.date.localeCompare(a.date)).map(p => {
+    const adjusted = adjustValues(p);
+    const top = ranked(adjusted, true)[0];
+    return `<tr>
+      <td>${esc(p.institute)}<div class="mini">${esc(p.source || 'Importada')}${p.entryMode === 'advanced' ? ' • Avançada' : ''}${p.methodology ? ' • ' + esc(p.methodology) : ''}</div></td>
+      <td>${new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+      <td>${p.scope === 'BR' ? 'Brasil' : esc(p.scope)}</td>
+      <td>${Number(p.n).toLocaleString('pt-BR')}</td>
+      <td>${top && top.value > 0 ? esc(top.name) + ' (' + pct(top.value) + ')' : '—'}</td>
+      <td>
+        <div class="inline-actions">
+          <button type="button" class="small-btn" data-edit="${esc(p.id)}">Editar</button>
+          <button type="button" class="small-btn danger" data-del="${esc(p.id)}">Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">Nenhuma pesquisa cadastrada para esta eleição/filtro. Clique em "+ Nova pesquisa" ou importe um CSV/JSON.</td></tr>';
+}
+
+function featureCode(f) {
+  const p = f.properties || {};
+  const v = p.sigla || p.SIGLA || p.abbrev || p.postal || p.UF || p.uf || p.name || p.nome || '';
+  if (String(v).length === 2) return String(v).toUpperCase();
+  return STATES.find(s => s[1].toLowerCase() === String(v).toLowerCase())?.[0] || '';
+}
+
+function stateAggregate(code) {
+  return aggregate(polls.filter(p => p.scope === code), false, null, false);
+}
+
+function hexToRgb(hex) {
+  let clean = String(hex || '').replace(/[^a-f0-9]/gi, '');
+  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+  if (clean.length !== 6) clean = '75a7ff';
+  return [
+    parseInt(clean.slice(0, 2), 16),
+    parseInt(clean.slice(2, 4), 16),
+    parseInt(clean.slice(4, 6), 16)
+  ];
+}
+
+function mix(a, b, t) {
+  const x = hexToRgb(a);
+  const y = hexToRgb(b);
+  const clamped = Math.max(0, Math.min(1, Number(t) || 0));
+  return '#' + x.map((v, i) => Math.round(v * (1 - clamped) + y[i] * clamped).toString(16).padStart(2, '0')).join('');
+}
+
+function mapColor(code) {
+  const a = stateAggregate(code);
+  if (!a.count) return '#d8d4c8';
+  const r = ranked(a.values, true);
+  if (!r.length || r[0].value <= 0) return '#d8d4c8';
+  const baseColor = colorForCandidate(r[0].id);
+  if ($('mapMetric').value === 'margin') {
+    const margin = (r[0]?.value || 0) - (r[1]?.value || 0);
+    const t = Math.min(0.92, 0.22 + margin / 30);
+    return mix('#d8d4c8', baseColor, t);
+  }
+  return baseColor;
+}
+
+function updateMap() {
+  if (!geoLayer) return;
+  geoLayer.setStyle(f => ({
+    fillColor: mapColor(featureCode(f)),
+    weight: 1,
+    color: '#fbfaf7',
+    fillOpacity: 0.92
+  }));
+  $('mapLegend').innerHTML = eligibleCandidates().map(c =>
+    `<span><i class="dot" style="background:${colorForCandidate(c.id)}"></i>${esc(c.name)}</span>`
+  ).join('') + '<span><i class="dot" style="background:#d8d4c8"></i>Sem dados estaduais</span>';
+}
+
+async function initMap() {
+  if (!window.L) {
+    $('mapStatus').textContent = 'Leaflet não carregou. Verifique a conexão com a internet.';
+    return;
+  }
+  map = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView([-14.5, -52], 3.5);
+  const urls = [
+    'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson',
+    'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/geojson/uf.json'
+  ];
+  let lastErr = '';
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) throw Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!Array.isArray(data.features) || !data.features.length) throw Error('GeoJSON vazio');
+      geoLayer = L.geoJSON(data, {
+        style: f => ({ fillColor: mapColor(featureCode(f)), weight: 1, color: '#fbfaf7', fillOpacity: 0.92 }),
+        onEachFeature: (f, l) => {
+          const code = featureCode(f);
+          const state = STATES.find(s => s[0] === code);
+          l.bindTooltip(state ? `${state[1]} (${code})` : (f.properties?.name || 'Estado'));
+          l.on('click', () => {
+            if (state) {
+              $('stateFilter').value = code;
+              $('regionFilter').value = 'BR';
+              render();
+            }
+          });
+        }
+      }).addTo(map);
+      map.fitBounds(geoLayer.getBounds(), { padding: [8, 8] });
+      $('mapStatus').textContent = 'Mapa carregado. Clique em um estado para filtrar.';
+      updateMap();
+      return;
+    } catch (e) {
+      lastErr = e.message;
+    }
+  }
+  $('mapStatus').textContent = `Mapa indisponível (${lastErr}). Os gráficos e tabelas seguem operacionais.`;
+}
+
+function updateKnobLabels() {
+  $('halfLifeOut').textContent = $('halfLife').value;
+  $('samplePowerOut').textContent = (+$('samplePower').value / 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+  $('biasPowerOut').textContent = $('biasPower').value + '%';
+  $('regionalWeightOut').textContent = $('regionalWeight').value + '%';
+  $('transferOut').textContent = $('transferPct').value + '%';
+}
+
+function syncCandidateSelects() {
+  const elig = eligibleCandidates();
+  const prevFrom = $('fromCandidate').value;
+  const prevTo = $('toCandidate').value;
+
+  for (const id of ['fromCandidate', 'toCandidate']) {
+    const el = $(id);
+    el.innerHTML = elig.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  }
+  if (elig.some(c => c.id === prevFrom)) $('fromCandidate').value = prevFrom;
+  if (elig.some(c => c.id === prevTo)) $('toCandidate').value = prevTo;
+  if ($('toCandidate').value === $('fromCandidate').value && elig.length > 1) {
+    $('toCandidate').selectedIndex = 1;
+  }
+  if (transfer) {
+    const fromObj = elig.find(c => c.id === transfer.from);
+    const toObj = elig.find(c => c.id === transfer.to);
+    if (!fromObj || !toObj || fromObj.id === toObj.id) {
+      transfer = null;
+      $('transferStatus').textContent = 'Cenário não aplicado.';
+    } else {
+      $('transferPct').value = transfer.pct;
+      $('transferOut').textContent = transfer.pct + '%';
+      $('transferStatus').textContent = `Cenário ativo: ${transfer.pct}% transferido de ${fromObj.name} para ${toObj.name}.`;
+    }
+  } else {
+    $('transferStatus').textContent = 'Cenário não aplicado.';
+  }
+}
+
+function updateDemoBanner() {
+  const b = $('demoBanner');
+  if (b) b.hidden = !polls.some(p => String(p.source || '').includes('DEMO'));
+}
+
+function render() {
+  updateKnobLabels();
+  syncCandidateSelects();
+  syncElectionBarUI();
+  const a = aggregate(currentPolls());
+  renderKPIs(a);
+  renderCharts(a);
+  renderTable();
+  updateMap();
+  updateDemoBanner();
+  schedulePersist();
+}
+
+function setupSelectors() {
+  for (const s of STATES) {
+    const o1 = document.createElement('option');
+    o1.value = s[0];
+    o1.textContent = `${s[1]} (${s[0]})`;
+    $('stateFilter').append(o1);
+
+    const o2 = document.createElement('option');
+    o2.value = s[0];
+    o2.textContent = `${s[1]} (${s[0]})`;
+    $('editScope').append(o2);
+  }
+}
+
+/* Gestão de Eleições (Novo, Trocar, Renomear, Excluir) */
+$('electionSelect').addEventListener('change', e => {
+  saveActiveElectionState();
+  activeElectionId = e.target.value;
+  applyActiveElectionToRuntime();
+  render();
+});
+
+function openElectionModal() {
+  $('electionForm').reset();
+  const nextNum = elections.length + 1;
+  $('newElectionName').value = `Eleição ${nextNum}`;
+  $('newElectionTemplate').value = 'empty';
+  $('newElectionCandidates').value = 'Candidato A, Candidato B, Candidato C';
+  $('customCandidatesWrap').style.display = 'block';
+  $('electionModal').classList.add('open');
+  setTimeout(() => $('newElectionName').focus(), 50);
+}
+
+function closeElectionModal() {
+  $('electionModal').classList.remove('open');
+}
+
+$('newElectionTemplate').addEventListener('change', e => {
+  $('customCandidatesWrap').style.display = e.target.value === 'empty' ? 'block' : 'none';
+});
+
+$('newElectionBtn').onclick = openElectionModal;
+$('closeElectionModal').onclick = closeElectionModal;
+$('cancelElectionModal').onclick = closeElectionModal;
+$('electionModal').addEventListener('click', e => { if (e.target === $('electionModal')) closeElectionModal(); });
+
+$('electionForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('newElectionName').value.trim() || `Eleição ${elections.length + 1}`;
+  const tpl = $('newElectionTemplate').value;
+  const rawCands = $('newElectionCandidates').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  saveActiveElectionState();
+  const newEl = createElectionObject(name, tpl, rawCands);
+  elections.push(newEl);
+  activeElectionId = newEl.id;
+  applyActiveElectionToRuntime();
+  closeElectionModal();
+  render();
+});
+
+$('renameElectionBtn').onclick = () => {
+  const active = getActiveElection();
+  if (!active) return;
+  const newName = prompt('Novo nome para a eleição atual:', active.name);
+  if (newName && newName.trim()) {
+    active.name = newName.trim();
+    render();
+  }
+};
+
+$('deleteElectionBtn').onclick = () => {
+  if (elections.length <= 1) {
+    alert('Não é possível excluir a única eleição ativa.');
+    return;
+  }
+  const active = getActiveElection();
+  if (confirm(`Deseja realmente excluir "${active.name}" e todas as suas ${polls.length} pesquisa(s)?`)) {
+    elections = elections.filter(e => e.id !== active.id);
+    activeElectionId = elections[0].id;
+    applyActiveElectionToRuntime();
+    render();
+  }
+};
+
+/* Modal de Pesquisas */
+const MACRO_REGIONS = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
+function selectedEntryMode() {
+  return document.querySelector('input[name="pollEntryMode"]:checked')?.value || 'simple';
+}
+function updateEntryModeUI() {
+  $('advancedPollFields').hidden = selectedEntryMode() !== 'advanced';
+}
+function renderRegionalEntry(regionData = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'regional-entry';
+  const rid = 'reg_' + Math.random().toString(36).slice(2, 9);
+  const opts = MACRO_REGIONS.map(r => `<option value="${esc(r)}" ${regionData.region === r ? 'selected' : ''}>${esc(r)}</option>`).join('');
+  wrap.innerHTML = `<div class="regional-head">
+    <div><label>Macrorregião</label><select data-region-name>${opts}</select></div>
+    <div><label>Amostra regional (n)</label><input data-region-n type="number" min="1" step="1" value="${Math.max(1, Number(regionData.n) || 300)}"></div>
+    <button type="button" class="danger" data-remove-region>Remover</button>
+  </div>
+  <div class="regional-results">${candidates.map(c => `<div class="candidate-field"><label>${esc(c.name)}</label><input data-region-candidate="${esc(c.id)}" type="number" min="0" max="100" step="0.1" value="${Number(regionData.results?.[c.id] ?? 0)}"></div>`).join('')}</div>`;
+  wrap.querySelector('[data-remove-region]').addEventListener('click', () => wrap.remove());
+  $('regionalEntries').appendChild(wrap);
+}
+function collectRegionalResults() {
+  const out = [];
+  for (const node of $('regionalEntries').querySelectorAll('.regional-entry')) {
+    const region = node.querySelector('[data-region-name]').value;
+    const n = Math.max(1, Math.round(Number(node.querySelector('[data-region-n]').value) || 1));
+    const results = {};
+    node.querySelectorAll('[data-region-candidate]').forEach(input => {
+      const value = Number(input.value);
+      results[input.dataset.regionCandidate] = Number.isFinite(value) && value >= 0 ? value : 0;
+    });
+    if (!eligibleCandidates().some(c => (results[c.id] || 0) > 0)) {
+      throw new Error(`Informe ao menos um percentual elegível para a região ${region}.`);
+    }
+    out.push({ region, n, results });
+  }
+  const seen = new Set();
+  for (const r of out) {
+    if (seen.has(r.region)) throw new Error(`A região ${r.region} foi adicionada mais de uma vez.`);
+    seen.add(r.region);
+  }
+  return out;
+}
+function openModal(p = null) {
+  $('pollForm').reset();
+  $('editId').value = p?.id || '';
+  $('modalTitle').textContent = p ? 'Editar pesquisa' : 'Nova pesquisa';
+  $('editInstitute').value = p?.institute || '';
+  $('editDate').value = p?.date || localISO();
+  $('editN').value = p?.n || 1000;
+  $('editScope').value = p?.scope || 'BR';
+  document.querySelector(`input[name="pollEntryMode"][value="${p?.entryMode === 'advanced' || p?.methodology || p?.regionalResults?.length ? 'advanced' : 'simple'}"]`).checked = true;
+  $('editFieldStart').value = p?.fieldStart || '';
+  $('editMethod').value = p?.methodology || '';
+  $('editMargin').value = p?.marginError ?? '';
+  $('editConfidence').value = p?.confidence ?? '';
+  $('editSponsor').value = p?.sponsor || '';
+  $('editRegistration').value = p?.registration || '';
+  $('editNotes').value = p?.methodologyNotes || '';
+  $('regionalEntries').innerHTML = '';
+  $('biasInputs').innerHTML = eligibleCandidates().map(c => `<div class="candidate-field"><label for="bias_${esc(c.id)}">${esc(c.name)}</label><input id="bias_${esc(c.id)}" data-bias="${esc(c.id)}" type="number" min="-30" max="30" step="0.1" value="${Number(p?.bias?.[c.id] ?? 0) || 0}"></div>`).join('');
+  $('candidateInputs').innerHTML = candidates.map(c => {
+    const v = p?.results?.[c.id] ?? 0;
+    return `<div class="candidate-field">
+      <label for="pct_${esc(c.id)}">${esc(c.name)}${isCandidateExcluded(c) ? ' <small>(Brancos/Indecisos)</small>' : ''}</label>
+      <input id="pct_${esc(c.id)}" data-candidate="${esc(c.id)}" type="number" min="0" max="100" step="0.1" value="${Number(v)}">
+    </div>`;
+  }).join('');
+  (p?.regionalResults || []).forEach(r => renderRegionalEntry(r));
+  updateEntryModeUI();
+  $('pollModal').classList.add('open');
+}
+
+function closeModal() {
+  $('pollModal').classList.remove('open');
+}
+
+function collectBias() {
+  const out = {};
+  document.querySelectorAll('#biasInputs [data-bias]').forEach(el => {
+    const v = Number(el.value);
+    if (Number.isFinite(v) && v !== 0) out[el.dataset.bias] = Math.max(-30, Math.min(30, v));
+  });
+  return out;
+}
+
+$('pollForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const results = {};
+  document.querySelectorAll('#candidateInputs [data-candidate]').forEach(el => {
+    const v = Number(el.value);
+    results[el.dataset.candidate] = Number.isFinite(v) && v >= 0 ? v : 0;
+  });
+  const hasEligibleVote = eligibleCandidates().some(c => (results[c.id] || 0) > 0);
+  if (!hasEligibleVote) {
+    alert('Informe um percentual maior que zero para ao menos um candidato elegível.');
+    return;
+  }
+
+  const id = $('editId').value;
+  const oldPoll = id ? polls.find(x => x.id === id) : null;
+  const scope = $('editScope').value;
+  const institute = $('editInstitute').value.trim();
+  const date = parseDate($('editDate').value);
+  const n = Math.max(1, Math.round(Number($('editN').value) || 1000));
+  const entryMode = selectedEntryMode();
+  let regionalResults = [];
+  if (!institute || !date) {
+    alert('Preencha o instituto e uma data de campo válida.');
+    return;
+  }
+  const sumAll = Object.values(results).reduce((a, b) => a + b, 0);
+  if ((sumAll < 95 || sumAll > 105) && !confirm(`Os percentuais somam ${fmt(sumAll)}%. Salvar mesmo assim?`)) return;
+  if (entryMode === 'simple' && oldPoll && (oldPoll.entryMode === 'advanced' || oldPoll.methodology || oldPoll.regionalResults?.length) &&
+      !confirm('No modo simples, a ficha técnica, o viés e os resultados regionais desta pesquisa serão removidos. Continuar?')) return;
+  if (entryMode === 'advanced') {
+    try { regionalResults = collectRegionalResults(); }
+    catch (err) { alert(err.message); return; }
+  }
+  const marginError = $('editMargin').value === '' ? null : Number($('editMargin').value);
+  const fieldStart = entryMode === 'advanced' ? ($('editFieldStart').value || null) : null;
+  if (entryMode === 'advanced' && fieldStart && parseDate(fieldStart) > date) {
+    alert('O início do campo não pode ser posterior ao fim do campo.');
+    return;
+  }
+  if (entryMode === 'advanced' && marginError !== null && (!Number.isFinite(marginError) || marginError < 0 || marginError > 20)) {
+    alert('A margem de erro deve estar entre 0 e 20 pontos percentuais.');
+    return;
+  }
+  const pollObj = {
+    id: id || ('manual_' + Date.now()), institute, date, n, scope,
+    region: scope === 'BR' ? 'BR' : stateRegion(scope), results,
+    bias: entryMode === 'advanced' ? collectBias() : (oldPoll?.bias || {}), source: oldPoll ? oldPoll.source : 'Cadastro manual',
+    entryMode,
+    fieldStart,
+    methodology: entryMode === 'advanced' ? $('editMethod').value : '',
+    marginError: entryMode === 'advanced' ? marginError : null,
+    confidence: entryMode === 'advanced' && $('editConfidence').value !== '' ? Number($('editConfidence').value) : null,
+    sponsor: entryMode === 'advanced' ? $('editSponsor').value.trim() : '',
+    registration: entryMode === 'advanced' ? $('editRegistration').value.trim() : '',
+    methodologyNotes: entryMode === 'advanced' ? $('editNotes').value.trim() : '',
+    regionalResults
+  };
+  if (id) polls = polls.map(x => x.id === id ? pollObj : x);
+  else polls.push(pollObj);
+  closeModal();
+  render();
+});
+
+$('addRegionalEntry').addEventListener('click', () => {
+  const used = [...$('regionalEntries').querySelectorAll('[data-region-name]')].map(el => el.value);
+  const next = MACRO_REGIONS.find(r => !used.includes(r));
+  if (!next) { alert('As cinco macrorregiões já foram adicionadas.'); return; }
+  renderRegionalEntry({ region: next });
+});
+document.querySelectorAll('input[name="pollEntryMode"]').forEach(el => el.addEventListener('change', updateEntryModeUI));
+
+$('newPollBtn').onclick = () => openModal();
+$('closeModal').onclick = closeModal;
+$('cancelModal').onclick = closeModal;
+$('pollModal').addEventListener('click', e => { if (e.target === $('pollModal')) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal();
+    closeElectionModal();
+  }
+});
+
+$('pollTable').addEventListener('click', e => {
+  const editBtn = e.target.closest('[data-edit]');
+  const delBtn = e.target.closest('[data-del]');
+  if (editBtn) {
+    const p = polls.find(x => x.id === editBtn.dataset.edit);
+    if (p) openModal(p);
+  }
+  if (delBtn && confirm('Excluir esta pesquisa da eleição ativa?')) {
+    polls = polls.filter(p => p.id !== delBtn.dataset.del);
+    render();
+  }
+});
+
+function parseCSV(text) {
+  const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+  if (lines.length < 2) throw Error('CSV sem linhas de dados.');
+  const delimiter = lines[0].includes(';') ? ';' : ',';
+
+  function splitLine(line) {
+    const out = [];
+    let cur = '';
+    let quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') { quoted = !quoted; }
+      else if (ch === delimiter && !quoted) { out.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    out.push(cur.trim());
+    return out;
+  }
+
+  const headers = splitLine(lines.shift()).map(x => x.trim());
+  if (!headers.length || headers.every(x => !x)) throw Error('O CSV não possui cabeçalhos válidos.');
+  return lines.filter(x => x.trim()).map(line => {
+    const vals = splitLine(line);
+    const o = {};
+    headers.forEach((h, i) => { o[h] = vals[i]; });
+    return o;
+  });
+}
+
+function upsertPolls(normalizedList) {
+  for (const incoming of normalizedList) {
+    const idx = polls.findIndex(p =>
+      p.id === incoming.id ||
+      (slug(p.institute) === slug(incoming.institute) && p.date === incoming.date && p.scope === incoming.scope)
+    );
+    if (idx >= 0) {
+      polls[idx] = { ...polls[idx], ...incoming };
+    } else {
+      polls.push(incoming);
+    }
+  }
+}
+
+async function importText(text, filename) {
+  const trimmed = String(text || '').trim();
+  const isJson = filename.toLowerCase().split('?')[0].endsWith('.json') || trimmed.startsWith('{') || trimmed.startsWith('[');
+  const parsed = isJson ? JSON.parse(trimmed) : parseCSV(trimmed);
+
+  if (!Array.isArray(parsed) && Array.isArray(parsed.elections) && parsed.elections.length) {
+    saveActiveElectionState();
+    let importedCount = 0;
+    for (const sourceElection of parsed.elections) {
+      if (!sourceElection || !Array.isArray(sourceElection.polls)) continue;
+      const el = {
+        ...sourceElection,
+        id: String(sourceElection.id || ('el_import_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7))),
+        name: String(sourceElection.name || 'Eleição importada'),
+        candidates: (Array.isArray(sourceElection.candidates) ? sourceElection.candidates : [])
+          .filter(c => c && (c.id || c.name))
+          .map((c, ci) => ({
+            id: String(c.id || ('cand_' + slug(c.name))),
+            name: String(c.name || c.id),
+            color: safeColor(c.color, PALETTE[ci % PALETTE.length]),
+            excluded: Boolean(c.excluded)
+          })),
+        settings: { ...defaultSettings(), ...(sourceElection.settings || {}) },
+        voteMode: sourceElection.voteMode === 'valid' ? 'valid' : 'total',
+        polls: sourceElection.polls.filter(p => p && parseDate(p.date)).map(p => ({ ...p, date: parseDate(p.date) }))
+      };
+      const existingIdx = elections.findIndex(x => x.id === el.id || slug(x.name) === slug(el.name));
+      if (existingIdx >= 0) {
+        elections[existingIdx] = el;
+      } else {
+        elections.push(el);
+      }
+      importedCount += el.polls.length;
+    }
+    if (!elections.length) throw Error('O arquivo não contém eleições válidas.');
+    activeElectionId = elections.some(e => e && e.id === parsed.activeElectionId) ? parsed.activeElectionId : elections[0].id;
+    applyActiveElectionToRuntime();
+    return importedCount;
+  }
+
+  const rows = Array.isArray(parsed) ? parsed : (parsed.pesquisas || parsed.polls || [parsed]);
+  const importedCands = (!Array.isArray(parsed) && Array.isArray(parsed.candidates)) ? parsed.candidates : null;
+
+  ensureCandidatesFromRows(rows, importedCands);
+  const normalized = rows.map(normalizePoll);
+  upsertPolls(normalized);
+  return normalized.length;
+}
+
+$('fileImport').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const n = await importText(await f.text(), f.name);
+    render();
+    alert(`${n} pesquisa(s) processada(s) com sucesso.`);
+  } catch (err) {
+    alert('Falha na importação: ' + err.message);
+  }
+  e.target.value = '';
+});
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$('exportBtn').onclick = () => {
+  saveActiveElectionState();
+  const active = getActiveElection();
+  const payload = JSON.stringify({
+    activeElectionId,
+    electionName: active?.name || 'Eleição',
+    candidates,
+    polls,
+    elections
+  }, null, 2);
+  const fileSlug = slug(active?.name || 'dados') || 'dados';
+  download(new Blob([payload], { type: 'application/json' }), `agregador-${fileSlug}.json`);
+};
+
+function dataURLBlob(dataURL) {
+  const [meta, data] = dataURL.split(',');
+  const match = meta.match(/:(.*?);/);
+  if (!match || !data) throw Error('Não foi possível converter o gráfico para PNG.');
+  const mime = match[1];
+  const binary = atob(data);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+$('pngBtn').onclick = () => {
+  if (!resultChart || !trendChart) {
+    alert('Os gráficos ainda não estão disponíveis.');
+    return;
+  }
+  const fileSlug = slug(getActiveElection()?.name || 'eleicao') || 'eleicao';
+  download(dataURLBlob(resultChart.toBase64Image()), `agregador-${fileSlug}-resultado.png`);
+  setTimeout(() => download(dataURLBlob(trendChart.toBase64Image()), `agregador-${fileSlug}-evolucao.png`), 350);
+};
+
+function csvCell(val) {
+  const s = String(val ?? '');
+  if (/[",\n\r;]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+$('templateBtn').onclick = () => {
+  const headers = ['institute', 'date', 'scope', 'n', ...candidates.map(c => c.name)].map(csvCell);
+  const row1 = ['Instituto Exemplo', localISO(), 'BR', '1500', ...candidates.map((c, i) => i === 0 ? '41' : i === 1 ? '37' : '6')].map(csvCell);
+  const csvContent = headers.join(',') + '\n' + row1.join(',') + '\n';
+  download(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }), 'modelo-pesquisas.csv');
+};
+
+$('fetchBtn').onclick = async () => {
+  const url = $('sourceUrl').value.trim();
+  if (!url) {
+    $('fetchStatus').textContent = 'Informe uma URL válida.';
+    return;
+  }
+  $('fetchStatus').textContent = 'Buscando dados…';
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw Error('HTTP ' + r.status);
+    const text = await r.text();
+    const n = await importText(text, url);
+    render();
+    $('fetchStatus').textContent = `${n} pesquisa(s) importada(s) com sucesso.`;
+  } catch (e) {
+    $('fetchStatus').textContent = 'Falha: ' + e.message + '. Verifique bloqueio CORS ou formato do arquivo.';
+  }
+};
+
+$('resetBtn').onclick = () => {
+  if (confirm('Deseja restaurar a aplicação para o estado inicial (Eleição 1 de demonstração)?')) {
+    [STORAGE_KEY, ...LEGACY_KEYS].forEach(k => localStorage.removeItem(k));
+    const el1 = createElectionObject('Eleição 1 (Demo)', 'demo');
+    elections = [el1];
+    activeElectionId = el1.id;
+    applyActiveElectionToRuntime();
+    render();
+  }
+};
+
+$('clearScope').onclick = () => {
+  $('regionFilter').value = 'BR';
+  $('stateFilter').value = 'BR';
+  render();
+};
+
+$('regionFilter').onchange = () => {
+  if ($('regionFilter').value !== 'BR') $('stateFilter').value = 'BR';
+  render();
+};
+
+$('stateFilter').onchange = () => {
+  if ($('stateFilter').value !== 'BR') $('regionFilter').value = 'BR';
+  render();
+};
+
+['halfLife', 'samplePower', 'biasPower', 'regionalWeight'].forEach(id => $(id).addEventListener('input', render));
+['useRecency', 'useSample', 'useBias', 'useRegion', 'mapMetric', 'trendScope'].forEach(id => $(id).addEventListener('change', render));
+document.querySelectorAll('input[name="voteMode"]').forEach(el => el.addEventListener('change', render));
+
+$('defaultsBtn').onclick = () => {
+  restoreSettings(defaultSettings());
+  render();
+};
+
+$('transferPct').oninput = updateKnobLabels;
+
+$('applyTransfer').onclick = () => {
+  const fromId = $('fromCandidate').value;
+  const toId = $('toCandidate').value;
+  if (!fromId || !toId || fromId === toId) {
+    $('transferStatus').textContent = 'Escolha dois candidatos diferentes.';
+    return;
+  }
+  transfer = { from: fromId, to: toId, pct: +$('transferPct').value };
+  render();
+};
+
+$('clearTransfer').onclick = () => {
+  transfer = null;
+  $('transferStatus').textContent = 'Cenário removido.';
+  render();
+};
+
+window.addEventListener('beforeunload', () => { clearTimeout(persistTimer); persist(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { clearTimeout(persistTimer); persist(); }
+});
+
+setupSelectors();
+setupChartDefaults();
+loadData();
+syncCandidateSelects();
+render();
+initMap();
+</script>
+</body>
+</html>
